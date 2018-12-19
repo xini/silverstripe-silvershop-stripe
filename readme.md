@@ -18,7 +18,7 @@ Based on [Mark Guinn's SS3 version](https://github.com/markguinn/silvershop-stri
 
 uses [Stripe.js v3](https://stripe.com/docs/stripe-js) 
 
-Currently this modules uses a custom form of the main silvershop repo to fix some SS4 incompatibility issues. To use thi smodule, please add the following to you rmain composer.json file:
+Currently this modules uses a custom fork of the main silvershop repo to fix some SS4 incompatibility issues. To use this module, please add the following to your main composer.json file:
 ```
     "repositories": [
         {
@@ -31,7 +31,7 @@ Currently this modules uses a custom form of the main silvershop repo to fix som
 ## Installation
 
 ```
-composer require innoweb/silvershop-stripe
+composer require innoweb/silverstripe-silvershop-stripe
 ```
 
 ## Configuration
@@ -75,7 +75,6 @@ Innoweb\SilvershopStripe\Checkout\Components\StripeOnsitePayment:
 ```
 
 This will hide the field to select previsouly stored cards in th epayment form. The card tokens will still be stored in the background in order to be able to process refunds and future manual payments.
-
 
 ## License
 
