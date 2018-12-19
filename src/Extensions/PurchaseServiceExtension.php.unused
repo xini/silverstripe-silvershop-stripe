@@ -1,0 +1,38 @@
+<?php
+
+namespace Innoweb\SilvershopStripe\Extensions;
+
+use SilverStripe\ORM\DataExtension;
+
+class PurchaseServiceExtension extends DataExtension
+{
+    
+    public function onBeforePurchase($gatewaydata)
+    {
+        $payment = $this->owner->getPayment();
+        $gatewayName = $payment->Gateway;
+        if ($gatewayName == 'Stripe') {
+            $cardReference = null;
+            // check if payment has set a saved credit card
+            if ($payment->SavedCreditCardID) {
+                $card = $payment->SavedCreditCard();
+                if ($card && $card->exists()) {
+                    $cardReference = $card->CardReference;
+                }
+            } else {
+                // use user's default credit card
+                if (($order = $payment->Order()) && $order->exists()) {
+                    if (($member = $order->Member()) && $member->exists() && ($card = $member->DefaultCreditCard()) && $card->exists()) {
+                        $cardReference = $card->CardReference;
+                    }
+                }
+            }
+            if ($cardReference && isset($gatewaydata['card'])) {
+                // delete new card details from gateway data 
+                unset($gatewaydata['card']);
+                // add reference to existing card
+                $gatewaydata['source'] = $cardReference;
+            }
+        }
+    }
+}

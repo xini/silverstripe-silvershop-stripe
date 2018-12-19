@@ -1,0 +1,18 @@
+---
+Name: silvershop-stripe-config
+After: silvershop-config
+---
+SilverStripe\Security\Member:
+  extensions:
+    - Innoweb\SilvershopStripe\Extensions\MemberExtension
+    
+SilverStripe\Core\Injector\Injector:
+  SilverShop\Checkout\Component\OnsitePayment:
+    class: Innoweb\SilvershopStripe\Checkout\Components\StripeOnsitePayment
+  SilverShop\Checkout\OrderProcessor:
+    class: Innoweb\SilvershopStripe\Checkout\StripeOrderProcessor
+
+SilverStripe\Omnipay\GatewayInfo:
+  Stripe:
+    parameters:
+      token_key: 'source'

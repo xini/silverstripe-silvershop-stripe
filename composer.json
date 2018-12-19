@@ -1,0 +1,35 @@
+{
+	"name": "innoweb/silverstripe-silvershop-stripe",
+	"description": "Adds stripe customer and creditcard saving to silvershop",
+	"type": "silverstripe-vendormodule",
+	"license": "BSD-3-Clause",
+	"keywords": ["silverstripe", "silvershop", "stripe", "customer", "card"],
+	"authors": [{
+		"name": "Florian Thoma",
+		"homepage": "http://www.innoweb.com.au"
+	}],
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/xini/silvershop-core"
+        }
+    ],
+	"require": {
+		"silverstripe/cms": "^4",
+		"silverstripe/vendor-plugin": "^1",
+        "silvershop/core": "dev-merged",
+        "suilven/silverstripe-track-member": "~1.0",
+        "omnipay/stripe": "^3.0",
+        "php-http/guzzle6-adapter": "^1.1"
+	},
+	"autoload": {
+		"psr-4": {
+			"Innoweb\\SilvershopStripe\\": "src/"
+		}
+    },
+    "extra": {
+        "expose": [
+            "javascript"
+        ]
+	}
+}
