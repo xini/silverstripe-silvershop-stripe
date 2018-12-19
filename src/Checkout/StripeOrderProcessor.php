@@ -109,7 +109,7 @@ class StripeOrderProcessor extends OrderProcessor
             Injector::inst()->get(LoggerInterface::class)->debug('is stripe');
             
             // update member and credit card
-            if (($member = Security::getCurrentUser() || $member = $this->order->Member()) && $member->exists()) {
+            if (($member = (Security::getCurrentUser() || $this->order->Member()) && $member->exists()) {
                 
                 Injector::inst()->get(LoggerInterface::class)->debug('member found');
                 
