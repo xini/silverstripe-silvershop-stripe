@@ -109,7 +109,7 @@ class StripeOnsitePayment extends OnsitePayment
         // Finally, add the javascript to the page
         Requirements::customScript("window.StripeConfig = " . json_encode($jsConfig), 'StripeJS');
         Requirements::javascript('https://js.stripe.com/v3/');
-        Requirements::javascript('resources/innoweb-silvershop-stripe/javascript/checkout.js');
+        Requirements::javascript('innoweb/silverstripe-silvershop-stripe:javascript/checkout.js');
         
         return $fields;
     }
