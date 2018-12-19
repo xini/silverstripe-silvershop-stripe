@@ -3,9 +3,7 @@
 namespace Innoweb\SilvershopStripe\Checkout;
 
 use Innoweb\SilvershopStripe\Model\CreditCard;
-use Psr\Log\LoggerInterface;
 use SilverShop\Checkout\OrderProcessor;
-use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Omnipay\Model\Payment;
 use SilverStripe\Omnipay\Service\PaymentService;
 use SilverStripe\Omnipay\Service\ServiceFactory;
@@ -14,7 +12,7 @@ use SilverStripe\Security\Security;
 
 class StripeOrderProcessor extends OrderProcessor
 {
-
+    
     /**
      * Handle payment with Stripe's stored customer and credit card details
      *
@@ -30,7 +28,6 @@ class StripeOrderProcessor extends OrderProcessor
      */
     public function makePayment($gateway, $gatewaydata = array(), $successUrl = null, $cancelUrl = null)
     {
-        Injector::inst()->get(LoggerInterface::class)->debug('StripeOrderProcessor called: '.$gateway);
         // only do this for Stripe
         if ($gateway != 'Stripe') {
             return parent::makePayment($gateway, $gatewaydata, $successUrl, $cancelUrl);
@@ -42,9 +39,9 @@ class StripeOrderProcessor extends OrderProcessor
             //errors have been stored.
             return null;
         }
-
+        
         $payment->setSuccessUrl($successUrl ? $successUrl : $this->getReturnUrl());
-
+        
         // Explicitly set the cancel URL
         if ($cancelUrl) {
             $payment->setFailureUrl($cancelUrl);
@@ -63,7 +60,7 @@ class StripeOrderProcessor extends OrderProcessor
         
         // save stripe customer and credit card
         $this->saveCustomerAndCard($service, $payment, $data);
-
+        
         // Initiate payment, get the result back
         try {
             $serviceResponse = $service->initiate($data);
@@ -72,7 +69,7 @@ class StripeOrderProcessor extends OrderProcessor
             $this->error($ex->getMessage());
             return null;
         }
-
+        
         // Check if the service response itself contains an error
         if ($serviceResponse->isError()) {
             if ($opResponse = $serviceResponse->getOmnipayResponse()) {
@@ -81,10 +78,10 @@ class StripeOrderProcessor extends OrderProcessor
                 $this->error('An unspecified payment error occurred. Please check the payment messages.');
             }
         }
-
+        
         // For an OFFSITE payment, serviceResponse will now contain a redirect
         // For an ONSITE payment, ShopPayment::onCaptured will have been called, which will have called completePayment
-
+        
         return $serviceResponse;
     }
     
@@ -98,49 +95,44 @@ class StripeOrderProcessor extends OrderProcessor
      */
     protected function saveCustomerAndCard($service, $payment, $data)
     {
-        Injector::inst()->get(LoggerInterface::class)->debug('called');
         if ($payment) {
-            Injector::inst()->get(LoggerInterface::class)->debug('payment found');
             
             // only do this for Stripe
             if ($payment->Gateway != 'Stripe') {
                 return;
             }
-            Injector::inst()->get(LoggerInterface::class)->debug('is stripe');
             
             // update member and credit card
-            if (($member = (Security::getCurrentUser() || $this->order->Member()) && $member->exists()) {
-                
-                Injector::inst()->get(LoggerInterface::class)->debug('member found');
+            $member = Security::getCurrentUser();
+            if (!$member) {
+                $member = $this->order->Member();
+            }
+            if ($member && $member->exists()) {
                 
                 // create new customer object in Stripe and store reference
                 if (!$member->StripeCustomerReference) {
                     $request = $service->oGateway()->createCustomer(array_merge(
                         array_intersect( // only submit the following fields
-                            $data, 
+                            $data,
                             [
                                 'email',
                             ]
-                        ),
+                            ),
                         [ // add the following custom fields
                             'description' => $member->getName()
                         ]
-                    ));
+                        ));
                     $response = $request->send();
                     if ($response->isSuccessful()) {
                         $member->StripeCustomerReference = $response->getCustomerReference();
                         $member->write();
-                        Injector::inst()->get(LoggerInterface::class)->debug('customer reference written');
                     } else {
                         $this->error($response->getMessage());
-                        Injector::inst()->get(LoggerInterface::class)->debug('error: '.$response->getMessage());
                     }
                 }
                 
                 // create new card if new one submitted
                 if ($member->StripeCustomerReference && (empty($data['SavedCreditCardID']) || $data['SavedCreditCardID'] == 'newcard')) {
-                    
-                    Injector::inst()->get(LoggerInterface::class)->debug('new card');
                     
                     $request = $service->oGateway()->createCard([
                         'cardReference' => isset($data['token']) ? $data['token'] : '',
@@ -158,7 +150,6 @@ class StripeOrderProcessor extends OrderProcessor
                             $card->ExpYear = isset($responseData['exp_year']) ? $responseData['exp_year'] : null;
                         }
                         $card->write();
-                        Injector::inst()->get(LoggerInterface::class)->debug('card written');
                         // add card to member
                         $member->CreditCards()->add($card);
                         if (!$member->DefaultCreditCardID) {
@@ -170,7 +161,6 @@ class StripeOrderProcessor extends OrderProcessor
                         $payment->write();
                     } else {
                         $this->error($response->getMessage());
-                        Injector::inst()->get(LoggerInterface::class)->debug('error: '.$response->getMessage());
                     }
                 }
                 
@@ -193,5 +183,5 @@ class StripeOrderProcessor extends OrderProcessor
         
         return $data;
     }
-
+    
 }
