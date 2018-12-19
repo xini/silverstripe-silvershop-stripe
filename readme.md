@@ -18,13 +18,25 @@ Based on [Mark Guinn's SS3 version](https://github.com/markguinn/silvershop-stri
 
 uses [Stripe.js v3](https://stripe.com/docs/stripe-js) 
 
+Currently this modules uses a custom form of the main silvershop repo to fix some SS4 incompatibility issues. To use thi smodule, please add the following to you rmain composer.json file:
+```
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/xini/silvershop-core"
+        }
+    ]
+```
+
 ## Installation
 
 ```
 composer require innoweb/silvershop-stripe
 ```
 
-Then create a file at `app/_config/payment.yml` that looks something like the following:
+## Configuration
+
+Create a file at `app/_config/payment.yml` that looks something like the following:
 
 ```
 ---
@@ -51,9 +63,19 @@ GatewayInfo:
       publishableKey: PUBLISHABLE-KEY-FOR-LIVE-ACCOUNT
 ```
 
-## To Do
+The module creates Stripe customers and cards when a payment is processed. To disable the use of previously stored cards in the checkout process, add the following to your config:
 
-* add selector of existing cards on payment form
+```
+---
+Name: app-stripe-config
+After: silvershop-stripe-config
+---
+Innoweb\SilvershopStripe\Checkout\Components\StripeOnsitePayment:
+  enable_saved_cards: false
+```
+
+This will hide the field to select previsouly stored cards in th epayment form. The card tokens will still be stored in the background in order to be able to process refunds and future manual payments.
+
 
 ## License
 

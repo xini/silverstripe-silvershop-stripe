@@ -9,12 +9,22 @@ use SilverShop\Model\Order;
 use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injectable;
+use SilverStripe\Forms\DropdownField;
+use SilverStripe\Forms\FieldGroup;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\HiddenField;
+use SilverStripe\ORM\ValidationException;
+use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Omnipay\GatewayInfo;
 use SilverStripe\Omnipay\Model\Payment;
 use SilverStripe\Omnipay\Service\PurchaseService;
+use SilverStripe\Security\Member;
 use SilverStripe\View\Requirements;
+use SilverStripe\Security\Security;
+use SilverStripe\Forms\OptionsetField;
+use Exception;
+use SilverStripe\Core\Config\Configurable;
+use SilverStripe\Forms\FormField;
 
 /**
  * This component should only ever be used on SSL encrypted pages!
@@ -23,6 +33,7 @@ class StripeOnsitePayment extends OnsitePayment
 {
     use Injectable;
     use Extensible;
+    use Configurable;
     
     /** @var bool - if for some reason the gateway is not actually stripe, fall back to OnsitePayment */
     protected $isStripe;
@@ -80,14 +91,17 @@ class StripeOnsitePayment extends OnsitePayment
         // Generate the standard set of fields and allow it to be customised
         $fields = FieldList::create(
             [
-                $stripeField = StripeField::create(
-                    'stripe', 
-                    _t(static::class.'.CreditCard', 'Credit or debit card')
-                ),
-                
+                $stripeField = StripeField::create('stripe', _t(static::class.'.CreditCard', 'Credit or debit card')),
                 $tokenField = HiddenField::create('token', '', ''),
             ]
         );
+        // load existing card selection field
+        $existingCardField = $this->getExistingCardsField();
+        if ($existingCardField) {
+            $fields->unshift($existingCardField);
+            $stripeField->setTitle(_t(static::class.'.NewCreditCard', 'New credit or debit card'));
+        }
+        
         $this->extend('updateFormFields', $fields);
         
         // Generate a basic config and allow it to be customised
@@ -113,6 +127,38 @@ class StripeOnsitePayment extends OnsitePayment
         
         return $fields;
     }
+    
+    /**
+     * @param Member $member
+     * @return bool
+     */
+    protected function hasExistingCards(Member $member = null) {
+        // don't show existing card fields
+        if (!$this->config()->get('enable_saved_cards')) {
+            return false;
+        }
+        if (!$member) $member = Security::getCurrentUser();
+        return $member && $member->CreditCards()->exists();
+    }
+    
+    /**
+     * Allow choosing from an existing credit cards
+     * @return FormField|null field
+     */
+    public function getExistingCardsField() {
+        $member = Security::getCurrentUser();
+        if ($this->hasExistingCards($member)) {
+            $cardOptions = $member->CreditCards()->sort('Created', 'DESC')->map('ID', 'Title')->toArray();
+            $cardOptions['newcard'] = _t('OnsitePaymentCheckoutComponent.CreateNewCard', 'Create a new card');
+            $fieldtype = count($cardOptions) > 3 ? DropdownField::class : OptionsetField::class;
+            $label = _t("OnsitePaymentCheckoutComponent.ExistingCards", "Existing Credit Cards");
+            return $fieldtype::create("SavedCreditCardID", $label,
+                $cardOptions,
+                $member->DefaultCreditCardID
+            )->addExtraClass('existingCreditCards')->setValue($member->DefaultCreditCardID);
+        }
+        return null;
+    }
 
     /**
      * Get the data fields that are required for the component.
@@ -127,7 +173,7 @@ class StripeOnsitePayment extends OnsitePayment
         if (!$this->isStripe) {
             return parent::getRequiredFields($order);
         } else {
-            return [];
+            return $this->hasExistingCards() ? ['SavedCreditCardID'] : [];
         }
     }
 
@@ -148,6 +194,17 @@ class StripeOnsitePayment extends OnsitePayment
         if (!$this->isStripe) {
             return parent::validateData($order, $data);
         } else {
+            
+            // If existing card selected, check that it exists in $member->CreditCards
+            $existingID = !empty($data['SavedCreditCardID']) ? (int)$data['SavedCreditCardID'] : 0;
+            if ($existingID) {
+                if (!Security::getCurrentUser() || !Security::getCurrentUser()->CreditCards()->byID($existingID)) {
+                    $result = ValidationResult::create();
+                    $result->error("Invalid card supplied", 'SavedCreditCardID');
+                    throw new ValidationException($result);
+                }
+            }
+            
             // NOTE: Stripe will validate clientside and if for some reason that falls through
             // it will fail on payment and give an error then. It would be a lot of work to get
             // the token to be namespaced so it could be passed here and there would be no point.
@@ -180,7 +237,6 @@ class StripeOnsitePayment extends OnsitePayment
      * @param Order $order
      * @param array $data data to be saved into order object
      *
-     * @throws Exception
      * @return Order the updated order
      */
     public function setData(Order $order, array $data)

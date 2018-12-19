@@ -23,6 +23,15 @@ class MemberExtension extends DataExtension
     public function updateCMSFields(FieldList $fields)
     {
         $fields->removeByName('StripeCustomerReference');
+        $fields->removeByName('DefaultCreditCardID');
+        $fields->removeByName('CreditCards');
+    }
+    
+    public function updateMemberFormFields(FieldList $fields)
+    {
+        $fields->removeByName('StripeCustomerReference');
+        $fields->removeByName('DefaultCreditCardID');
+        $fields->removeByName('CreditCards');
     }
     
 }

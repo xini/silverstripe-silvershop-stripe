@@ -1,5 +1,5 @@
 /**
- * Hooks into the checkout form, activating the Stripe.js api's to retrieve a token and store it in a hidden field.
+ * Hooks into the checkout form, activating the Stripe.js api to retrieve a token and store it in a hidden field.
  * It doesn't depend on jQuery or any other javascript library.
  */
 (function(window, document, undefined) {
@@ -41,7 +41,34 @@
 
 		
 		var card = elements.create('card', {style: style});
-		card.mount('#' + config.stripeField);
+		
+		// check if card selection field is present
+		var selectionFields = document.querySelectorAll('input[name="SavedCreditCardID"]') || document.querySelectorAll('select[name="SavedCreditCardID"]');
+		if (selectionFields && selectionFields.length) {
+			function findAncestor (el, cls) {
+			    while ((el = el.parentElement) && !el.classList.contains(cls));
+			    return el;
+			}
+			function updateCardField() {
+				var current = document.querySelector('input[name="SavedCreditCardID"]:checked') || document.querySelector('select[name="SavedCreditCardID"]');
+				if (current && current.value == 'newcard') {
+					findAncestor(document.getElementById(config.stripeField), 'field').style.display = 'block';
+					card.mount('#' + config.stripeField);
+				} else {
+					card.unmount('#' + config.stripeField);
+					findAncestor(document.getElementById(config.stripeField), 'field').style.display = 'none';
+				}
+			};
+			// attache change event
+			Array.prototype.forEach.call(selectionFields, function (selectionField) {
+				selectionField.addEventListener('change', updateCardField);
+			});
+			// run update
+			updateCardField();
+		} else {
+			// mount card field without selector
+			card.mount('#' + config.stripeField);
+		}
 		
 		function stripeTokenHandler(token) {
 			// Insert the token ID into the form so it gets submitted to the server
@@ -68,8 +95,11 @@
 		};		
 
 		form.addEventListener('submit', function(e) {
-			e.preventDefault();
-			createToken();
+			var selectedSavedCard = document.querySelector('input[name="SavedCreditCardID"]:checked') || document.querySelector('select[name="SavedCreditCardID"]');
+			if (!selectedSavedCard || selectedSavedCard.value == 'newcard') {
+				e.preventDefault();
+				createToken();
+			}
 		});
 
 	});

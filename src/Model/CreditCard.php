@@ -21,4 +21,12 @@ class CreditCard extends DataObject
     private static $has_one = [
         'Member' => Member::class,
     ];
+    
+    private static $casting = [
+        'Title' => 'Varchar(50)',
+    ];
+    
+    public function getTitle() {
+        return $this->Brand . ' ****' . $this->LastFourDigits . ' ' . $this->ExpMonth . '/' . $this->ExpYear;
+    }
 }

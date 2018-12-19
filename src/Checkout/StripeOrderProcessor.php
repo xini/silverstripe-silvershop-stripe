@@ -9,6 +9,8 @@ use SilverStripe\Omnipay\Service\PaymentService;
 use SilverStripe\Omnipay\Service\ServiceFactory;
 use SilverStripe\Omnipay\Service\ServiceResponse;
 use SilverStripe\Security\Security;
+use SilverStripe\Core\Config\Config;
+use Innoweb\SilvershopStripe\Checkout\Components\StripeOnsitePayment;
 
 class StripeOrderProcessor extends OrderProcessor
 {
@@ -56,14 +58,14 @@ class StripeOrderProcessor extends OrderProcessor
         $factory = ServiceFactory::create();
         $service = $factory->getService($payment, ServiceFactory::INTENT_PAYMENT);
         
-        $data = $this->getGatewayData($gatewaydata);
+        $gatewaydata = $this->getGatewayData($gatewaydata);
         
-        // save stripe customer and credit card
-        $this->saveCustomerAndCard($service, $payment, $data);
+        // save stripe customer and credit card, update data
+        $gatewaydata = $this->saveCustomerAndCard($service, $payment, $gatewaydata);
         
         // Initiate payment, get the result back
         try {
-            $serviceResponse = $service->initiate($data);
+            $serviceResponse = $service->initiate($gatewaydata);
         } catch (\SilverStripe\Omnipay\Exception\Exception $ex) {
             // error out when an exception occurs
             $this->error($ex->getMessage());
@@ -90,10 +92,10 @@ class StripeOrderProcessor extends OrderProcessor
      *
      * @param PaymentService $service
      * @param Payment $payment
-     * @param array $data
+     * @param array $gatewaydata
      * @return null
      */
-    protected function saveCustomerAndCard($service, $payment, $data)
+    protected function saveCustomerAndCard($service, $payment, $gatewaydata)
     {
         if ($payment) {
             
@@ -111,17 +113,11 @@ class StripeOrderProcessor extends OrderProcessor
                 
                 // create new customer object in Stripe and store reference
                 if (!$member->StripeCustomerReference) {
-                    $request = $service->oGateway()->createCustomer(array_merge(
-                        array_intersect( // only submit the following fields
-                            $data,
-                            [
-                                'email',
-                            ]
-                            ),
-                        [ // add the following custom fields
-                            'description' => $member->getName()
-                        ]
-                        ));
+                    $stripeData = [
+                        'email' => $member->Email,
+                        'description' => $member->getName()
+                    ];
+                    $request = $service->oGateway()->createCustomer($stripeData);
                     $response = $request->send();
                     if ($response->isSuccessful()) {
                         $member->StripeCustomerReference = $response->getCustomerReference();
@@ -132,46 +128,61 @@ class StripeOrderProcessor extends OrderProcessor
                 }
                 
                 // create new card if new one submitted
-                if ($member->StripeCustomerReference && (empty($data['SavedCreditCardID']) || $data['SavedCreditCardID'] == 'newcard')) {
-                    
-                    $request = $service->oGateway()->createCard([
-                        'cardReference' => isset($data['token']) ? $data['token'] : '',
-                        'customerReference' => $member->StripeCustomerReference,
-                    ]);
-                    $response = $request->send();
-                    if ($response->isSuccessful()) {
-                        // save card
-                        $card = CreditCard::create();
-                        $card->CardReference = $response->getCardReference();
-                        if ($responseData = $response->getData()) {
-                            $card->LastFourDigits = isset($responseData['last4']) ? $responseData['last4'] : null;
-                            $card->Brand = isset($responseData['brand']) ? $responseData['brand'] : null;
-                            $card->ExpMonth = isset($responseData['exp_month']) ? $responseData['exp_month'] : null;
-                            $card->ExpYear = isset($responseData['exp_year']) ? $responseData['exp_year'] : null;
+                if ($member->StripeCustomerReference) {
+                    if (empty($gatewaydata['SavedCreditCardID']) || $gatewaydata['SavedCreditCardID'] == 'newcard') {
+                        
+                        $request = $service->oGateway()->createCard([
+                            'cardReference' => isset($gatewaydata['token']) ? $gatewaydata['token'] : '',
+                            'customerReference' => $member->StripeCustomerReference,
+                        ]);
+                        $response = $request->send();
+                        if ($response->isSuccessful()) {
+                            // save card
+                            $card = CreditCard::create();
+                            $card->CardReference = $response->getCardReference();
+                            if ($responseData = $response->getData()) {
+                                $card->LastFourDigits = isset($responseData['last4']) ? $responseData['last4'] : null;
+                                $card->Brand = isset($responseData['brand']) ? $responseData['brand'] : null;
+                                $card->ExpMonth = isset($responseData['exp_month']) ? $responseData['exp_month'] : null;
+                                $card->ExpYear = isset($responseData['exp_year']) ? $responseData['exp_year'] : null;
+                            }
+                            $card->write();
+                            // add card to member
+                            $member->CreditCards()->add($card);
+                            if (!$member->DefaultCreditCardID) {
+                                $member->DefaultCreditCardID = $card->ID;
+                            }
+                            $member->write();
+                            // add card to payment
+                            $payment->SavedCreditCardID = $card->ID;
+                            $payment->write();
+                        } else {
+                            $this->error($response->getMessage());
                         }
-                        $card->write();
-                        // add card to member
-                        $member->CreditCards()->add($card);
-                        if (!$member->DefaultCreditCardID) {
-                            $member->DefaultCreditCardID = $card->ID;
-                        }
-                        $member->write();
-                        // add card to payment
-                        $payment->SavedCreditCardID = $card->ID;
-                        $payment->write();
+                        
                     } else {
-                        $this->error($response->getMessage());
+                        // this will have been validated in OnsitePaymentCheckoutComponent
+                        $payment->SavedCreditCardID = $gatewaydata['SavedCreditCardID'];
+                        $payment->write();
                     }
                 }
                 
-            }
-            
-            if (isset($data['SavedCreditCardID']) && $data['SavedCreditCardID'] !== 'newcard') {
-                // this will have been validated in OnsitePaymentCheckoutComponent
-                $payment->SavedCreditCardID = $data['SavedCreditCardID'];
-                $payment->write();
+                // update stripe data, replacing token with customer/card
+                if ($member->StripeCustomerReference) {
+                    
+                    // remove token already used for customer creation, replace with customer reference
+                    unset($gatewaydata['token']);
+                    $gatewaydata['customerReference'] = $member->StripeCustomerReference;
+                    
+                    // add credit card reference for this payment if available
+                    if ($card = $payment->SavedCreditCard()) {
+                        $gatewaydata['cardReference'] = $card->CardReference;
+                    }
+                }
             }
         }
+        
+        return $gatewaydata;
     }
     
     protected function getGatewayData($customData)
