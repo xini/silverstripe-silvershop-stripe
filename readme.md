@@ -18,16 +18,6 @@ Based on [Mark Guinn's SS3 version](https://github.com/markguinn/silvershop-stri
 
 uses [Stripe.js v3](https://stripe.com/docs/stripe-js) 
 
-Currently this modules uses a custom fork of the main silvershop repo to fix some SS4 incompatibility issues. To use this module, please add the following to your main composer.json file:
-```
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/xini/silvershop-core"
-        }
-    ]
-```
-
 ## Installation
 
 ```

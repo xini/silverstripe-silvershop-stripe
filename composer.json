@@ -8,16 +8,10 @@
 		"name": "Florian Thoma",
 		"homepage": "http://www.innoweb.com.au"
 	}],
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/xini/silvershop-core"
-        }
-    ],
 	"require": {
 		"silverstripe/cms": "^4",
 		"silverstripe/vendor-plugin": "^1",
-        "silvershop/core": "dev-merged",
+        "silvershop/core": "3.x-dev",
         "suilven/silverstripe-track-member": "~1.0",
         "omnipay/stripe": "^3.0",
         "php-http/guzzle6-adapter": "^1.1"
