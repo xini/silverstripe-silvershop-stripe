@@ -32,11 +32,11 @@ Create a file at `app/_config/payment.yml` that looks something like the followi
 ---
 Name: payment
 ---
-Payment:
+SilverStripe\Omnipay\Model\Payment:
   allowed_gateways:
     - 'Stripe'
 
-GatewayInfo:
+SilverStripe\Omnipay\GatewayInfo:
   Stripe:
     parameters:
       apiKey: SECRET-KEY-FOR-YOUR-TEST-ACCOUNT
@@ -46,7 +46,7 @@ GatewayInfo:
 Only:
   environment: 'live'
 ---
-GatewayInfo:
+SilverStripe\Omnipay\GatewayInfo:
   Stripe:
     parameters:
       apiKey: SECRET-KEY-FOR-YOUR-LIVE-ACCOUNT
