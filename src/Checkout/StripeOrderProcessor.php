@@ -190,7 +190,13 @@ class StripeOrderProcessor extends OrderProcessor
         $data = parent::getGatewayData($customData);
         
         // add description
-        $data['description'] = 'Payment by '.$data['firstName'].' '.$data['lastName'].' ('.$data['email'].')';
+        $data['description'] = $data['firstName'] . ' ' . $data['lastName'] . ' | ';
+        if ($this->order->BillingAddress()->Company) {
+            $data['description'] .= (string) $this->order->BillingAddress()->Company . ' | ';
+        }
+        $data['description'] .= $data['email'] . ' | ' . $data['transactionId'] . ' ';
+
+        $this->order->extend('updateGetGatewayData', $data);
         
         return $data;
     }
