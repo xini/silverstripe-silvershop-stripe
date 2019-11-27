@@ -18,3 +18,7 @@ SilverStripe\Core\Injector\Injector:
 
 Innoweb\SilvershopStripe\Checkout\Components\StripeOnsitePayment:
   enable_saved_cards: true
+
+SilverStripe\Omnipay\GatewayInfo:
+  Stripe:
+    is_offsite: false
