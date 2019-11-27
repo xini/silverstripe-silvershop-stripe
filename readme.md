@@ -11,7 +11,7 @@ Based on [Mark Guinn's SS3 version](https://github.com/markguinn/silvershop-stri
 ## Requirements
 
 * [SilverStripe CMS](https://github.com/silverstripe/silverstripe-cms) 4.*
-* [SilverShop Core](https://github.com/silvershop/silvershop-core/) master
+* [SilverShop Core](https://github.com/silvershop/silvershop-core/) 3.*
 * [Track members](https://github.com/gordonbanderson/silverstripe-track-member) 1.*
 * [Omnipay Stripe](https://github.com/thephpleague/omnipay-stripe) 3.*
 * [Guzzle 6 adapter](https://github.com/php-http/guzzle6-adapter) 1.*
