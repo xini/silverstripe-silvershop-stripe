@@ -46,7 +46,7 @@ class PaymentIntentPurchaseService extends Extension
     {
         // Hack to get the payment, as silverstripe-omnipay doesn't currently
         // provide a getPayment() method in PaymentService
-        $reflectionProperty = new ReflectionProperty(get_class($this->owner), 'payment');
+        $reflectionProperty = new \ReflectionProperty(get_class($this->owner), 'payment');
         $reflectionProperty->setAccessible(true);
 
         $payment = $reflectionProperty->getValue($this->owner);
