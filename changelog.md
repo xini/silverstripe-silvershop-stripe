@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.0.0-beta5]
+
+* remove credit card details from database, load via API instead
+
 ## [1.0.0-beta4]
 
 * remove obsolete guzzle dependency

@@ -34,13 +34,13 @@ class StripeOnsitePayment extends OnsitePayment
     use Injectable;
     use Extensible;
     use Configurable;
-    
+
     /** @var bool - if for some reason the gateway is not actually stripe, fall back to OnsitePayment */
     protected $isStripe;
-    
+
     /** @var \Omnipay\Common\AbstractGateway|\Omnipay\Stripe\Gateway */
     protected $gateway;
-    
+
     /**
      * @param Order $order
      *
@@ -58,10 +58,10 @@ class StripeOnsitePayment extends OnsitePayment
             $this->gateway = $service->oGateway();
             $this->isStripe = ($this->gateway instanceof \Omnipay\Stripe\Gateway);
         }
-        
+
         return $this->gateway;
     }
-    
+
     /**
      * @param \Omnipay\Common\AbstractGateway|\Omnipay\Stripe\Gateway $gateway
      * @return $this
@@ -72,7 +72,7 @@ class StripeOnsitePayment extends OnsitePayment
         $this->isStripe = ($this->gateway instanceof \Omnipay\Stripe\Gateway);
         return $this;
     }
-    
+
     /**
      * Get form fields for manipulating the current order,
      * according to the responsibility of this component.
@@ -87,7 +87,7 @@ class StripeOnsitePayment extends OnsitePayment
         if (!$this->isStripe) {
             return parent::getFormFields($order);
         }
-        
+
         // Generate the standard set of fields and allow it to be customised
         $fields = FieldList::create(
             [
@@ -101,9 +101,9 @@ class StripeOnsitePayment extends OnsitePayment
             $fields->unshift($existingCardField);
             $stripeField->setTitle(_t(static::class.'.NewCreditCard', 'New credit or debit card'));
         }
-        
+
         $this->extend('updateFormFields', $fields);
-        
+
         // Generate a basic config and allow it to be customised
         $stripeConfig = Config::inst()->get(GatewayInfo::class, 'Stripe');
         $jsConfig = [
@@ -115,19 +115,19 @@ class StripeOnsitePayment extends OnsitePayment
                                 : '',
         ];
         $this->extend('updateStripeConfig', $jsConfig);
-        
+
         if (empty($jsConfig['key'])) {
             user_error('Publishable key was not set. Should be in GatewayInfo.Stripe.parameters.publishableKey.');
         }
-        
+
         // Finally, add the javascript to the page
         Requirements::customScript("window.StripeConfig = " . json_encode($jsConfig), 'StripeJS');
         Requirements::javascript('https://js.stripe.com/v3/');
         Requirements::javascript('innoweb/silverstripe-silvershop-stripe:javascript/checkout.js');
-        
+
         return $fields;
     }
-    
+
     /**
      * @param Member $member
      * @return bool
@@ -140,7 +140,7 @@ class StripeOnsitePayment extends OnsitePayment
         if (!$member) $member = Security::getCurrentUser();
         return $member && $member->CreditCards()->exists();
     }
-    
+
     /**
      * Allow choosing from an existing credit cards
      * @return FormField|null field
@@ -148,7 +148,11 @@ class StripeOnsitePayment extends OnsitePayment
     public function getExistingCardsField() {
         $member = Security::getCurrentUser();
         if ($this->hasExistingCards($member)) {
-            $cardOptions = $member->CreditCards()->sort('Created', 'DESC')->map('ID', 'Title')->toArray();
+            $cardOptions = [];
+            $cards = $member->CreditCards()->sort('Created', 'DESC');
+            foreach ($cards as $card) {
+                $cardOptions[$card->ID] = $card->getTitle();
+            }
             $cardOptions['newcard'] = _t('OnsitePaymentCheckoutComponent.CreateNewCard', 'Create a new card');
             $fieldtype = count($cardOptions) > 3 ? DropdownField::class : OptionsetField::class;
             $label = _t("OnsitePaymentCheckoutComponent.ExistingCards", "Existing Credit Cards");
@@ -194,7 +198,7 @@ class StripeOnsitePayment extends OnsitePayment
         if (!$this->isStripe) {
             return parent::validateData($order, $data);
         } else {
-            
+
             // If existing card selected, check that it exists in $member->CreditCards
             $existingID = !empty($data['SavedCreditCardID']) ? (int)$data['SavedCreditCardID'] : 0;
             if ($existingID) {
@@ -204,7 +208,7 @@ class StripeOnsitePayment extends OnsitePayment
                     throw new ValidationException($result);
                 }
             }
-            
+
             // NOTE: Stripe will validate clientside and if for some reason that falls through
             // it will fail on payment and give an error then. It would be a lot of work to get
             // the token to be namespaced so it could be passed here and there would be no point.
