@@ -6,6 +6,8 @@ namespace Innoweb\SilvershopStripe\Extensions;
 
 use Omnipay\Common\Message\RequestInterface;
 use Omnipay\Common\Message\ResponseInterface;
+use SilverStripe\Omnipay\GatewayInfo;
+use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Extension;
 
 class PaymentIntentPurchaseService extends Extension
@@ -26,6 +28,12 @@ class PaymentIntentPurchaseService extends Extension
             $data['paymentMethod'] = $data['token'];
             unset($data['token']);
             $data['confirm'] = true;
+
+			// Get the config values for the failure url (if specified)
+			$stripeConfig = Config::inst()->get(GatewayInfo::class, 'Stripe_PaymentIntents');
+			
+			if(isset($stripeConfig['failureUrl']))
+				$payment->setFailureUrl($stripeConfig['failureUrl']);
         }
 
 
