@@ -3,6 +3,7 @@
 namespace Innoweb\SilvershopStripe\Model;
 
 use Innoweb\SilvershopStripe\Omnipay\Message\FetchCardRequest;
+use Omnipay\Common\Exception\InvalidRequestException;
 use Omnipay\Common\Http\Client as OmnipayClient;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\ORM\DB;
@@ -28,33 +29,40 @@ class CreditCard extends DataObject
 
     public function getCardDetails()
     {
-        if (!$this->card_details) {
-            // load data from API
-            $data = [];
+        if (!$this->card_details
+            && $this->CardReference
+            && $this->Member()
+            && $this->Member()->StripeCustomerReference
+        ) {
+            try {
+                // load data from API
+                $data = [];
 
-            $gatewayName = 'Stripe';
-            $gatewayFactory = Injector::inst()->get('Omnipay\Common\GatewayFactory');
-            $gateway = $gatewayFactory->create($gatewayName);
-            $parameters = GatewayInfo::getParameters($gatewayName);
-            if (is_array($parameters)) {
-                $gateway->initialize($parameters);
-            }
+                $gatewayName = 'Stripe';
+                $gatewayFactory = Injector::inst()->get('Omnipay\Common\GatewayFactory');
+                $gateway = $gatewayFactory->create($gatewayName);
+                $parameters = GatewayInfo::getParameters($gatewayName);
+                if (is_array($parameters)) {
+                    $gateway->initialize($parameters);
+                }
 
-            $obj = new FetchCardRequest(new OmnipayClient(), SymfonyRequest::createFromGlobals());
-            $fetchCardRequest = $obj->initialize(array_replace($gateway->getParameters(), $parameters));
-            $fetchCardRequest->setCustomerReference($this->Member()->StripeCustomerReference);
-            $fetchCardRequest->setCardReference($this->CardReference);
+                $obj = new FetchCardRequest(new OmnipayClient(), SymfonyRequest::createFromGlobals());
+                $fetchCardRequest = $obj->initialize(array_replace($gateway->getParameters(), $parameters));
+                $fetchCardRequest->setCustomerReference($this->Member()->StripeCustomerReference);
+                $fetchCardRequest->setCardReference($this->CardReference);
 
-            $response = $fetchCardRequest->send();
-            if ($response->isSuccessful()) {
-                $responseData = $response->getData();
-                $data = [
-                    'Brand' => isset($responseData['brand']) ? $responseData['brand'] : null,
-                    'LastFourDigits' => isset($responseData['last4']) ? $responseData['last4'] : null,
-                    'ExpiryMonth' => isset($responseData['exp_month']) ? $responseData['exp_month'] : null,
-                    'ExpiryYear' => isset($responseData['exp_year']) ? $responseData['exp_year'] : null,
-                ];
-                $this->card_details = ArrayData::create($data);
+                $response = $fetchCardRequest->send();
+                if ($response->isSuccessful()) {
+                    $responseData = $response->getData();
+                    $data = [
+                        'Brand' => isset($responseData['brand']) ? $responseData['brand'] : null,
+                        'LastFourDigits' => isset($responseData['last4']) ? $responseData['last4'] : null,
+                        'ExpiryMonth' => isset($responseData['exp_month']) ? $responseData['exp_month'] : null,
+                        'ExpiryYear' => isset($responseData['exp_year']) ? $responseData['exp_year'] : null,
+                    ];
+                    $this->card_details = ArrayData::create($data);
+                }
+            } catch (InvalidRequestException $e) {
             }
         }
         return $this->card_details;
