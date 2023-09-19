@@ -38,6 +38,7 @@ class StripeOnsitePayment extends OnsitePayment
 
     /** @var bool - if for some reason the gateway is not actually stripe, fall back to OnsitePayment */
     protected $isStripe;
+
     /** @var bool - do we use Payment Intents? */
     protected $isPaymentIntent;
 
@@ -137,7 +138,6 @@ class StripeOnsitePayment extends OnsitePayment
             Requirements::javascript('innoweb/silverstripe-silvershop-stripe:javascript/checkout.js');
         }
 
-
         return $fields;
     }
 
@@ -161,7 +161,11 @@ class StripeOnsitePayment extends OnsitePayment
     public function getExistingCardsField() {
         $member = Security::getCurrentUser();
         if ($this->hasExistingCards($member)) {
-            $cardOptions = $member->CreditCards()->sort('Created', 'DESC')->map('ID', 'Title')->toArray();
+            $cardOptions = [];
+            $cards = $member->CreditCards()->sort('Created', 'DESC');
+            foreach ($cards as $card) {
+                $cardOptions[$card->ID] = $card->getTitle();
+            }
             $cardOptions['newcard'] = _t('OnsitePaymentCheckoutComponent.CreateNewCard', 'Create a new card');
             $fieldtype = count($cardOptions) > 3 ? DropdownField::class : OptionsetField::class;
             $label = _t("OnsitePaymentCheckoutComponent.ExistingCards", "Existing Credit Cards");

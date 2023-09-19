@@ -140,12 +140,6 @@ class StripeOrderProcessor extends OrderProcessor
                             // save card
                             $card = CreditCard::create();
                             $card->CardReference = $response->getCardReference();
-                            if ($responseData = $response->getData()) {
-                                $card->LastFourDigits = isset($responseData['last4']) ? $responseData['last4'] : null;
-                                $card->Brand = isset($responseData['brand']) ? $responseData['brand'] : null;
-                                $card->ExpMonth = isset($responseData['exp_month']) ? $responseData['exp_month'] : null;
-                                $card->ExpYear = isset($responseData['exp_year']) ? $responseData['exp_year'] : null;
-                            }
                             $card->write();
                             // add card to member
                             $member->CreditCards()->add($card);
