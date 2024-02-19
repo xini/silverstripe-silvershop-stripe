@@ -6,8 +6,6 @@ This module uses Omnipay's Stripe adapter but overrides SilverShop's default che
 
 Based on [Mark Guinn's SS3 version](https://github.com/markguinn/silvershop-stripe), extended with saving of the token to the Member object for later use.
 
-**This module is still work in progress. PRs welcome!**
-
 ## Requirements
 
 * [SilverStripe CMS](https://github.com/silverstripe/silverstripe-cms) 4.*

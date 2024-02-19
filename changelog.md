@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.0.0]
+
+* Payment Intents integration, thanks @BettinaMaria98 and @wernerkrauss
+
 ## [1.0.0-beta6]
 
 * catch omnipay exeption when deleting a user that is not linked to a stripe user and has no credit card data
