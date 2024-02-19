@@ -3,6 +3,7 @@
 namespace Innoweb\SilvershopStripe\Checkout\Components;
 
 use Innoweb\SilvershopStripe\Forms\StripeField;
+use Omnipay\Stripe\PaymentIntentsGateway;
 use SilverShop\Checkout\Checkout;
 use SilverShop\Checkout\Component\OnsitePayment;
 use SilverShop\Model\Order;
@@ -38,13 +39,16 @@ class StripeOnsitePayment extends OnsitePayment
     /** @var bool - if for some reason the gateway is not actually stripe, fall back to OnsitePayment */
     protected $isStripe;
 
-    /** @var \Omnipay\Common\AbstractGateway|\Omnipay\Stripe\Gateway */
+    /** @var bool - do we use Payment Intents? */
+    protected $isPaymentIntent;
+
+    /** @var \Omnipay\Common\AbstractGateway|\Omnipay\Stripe\AbstractGateway */
     protected $gateway;
 
     /**
      * @param Order $order
      *
-     * @return \Omnipay\Common\AbstractGateway|\Omnipay\Stripe\Gateway
+     * @return \Omnipay\Common\AbstractGateway|\Omnipay\Stripe\AbstractGateway
      */
     protected function getGateway($order)
     {
@@ -56,7 +60,8 @@ class StripeOnsitePayment extends OnsitePayment
             );
             $service = PurchaseService::create($tempPayment);
             $this->gateway = $service->oGateway();
-            $this->isStripe = ($this->gateway instanceof \Omnipay\Stripe\Gateway);
+            $this->isStripe = ($this->gateway instanceof \Omnipay\Stripe\AbstractGateway);
+            $this->isPaymentIntent = $this->gateway instanceof PaymentIntentsGateway;
         }
 
         return $this->gateway;
@@ -69,7 +74,8 @@ class StripeOnsitePayment extends OnsitePayment
     public function setGateway($gateway)
     {
         $this->gateway = $gateway;
-        $this->isStripe = ($this->gateway instanceof \Omnipay\Stripe\Gateway);
+        $this->isStripe = ($this->gateway instanceof \Omnipay\Stripe\AbstractGateway);
+        $this->isPaymentIntent = $this->gateway instanceof PaymentIntentsGateway;
         return $this;
     }
 
@@ -105,11 +111,13 @@ class StripeOnsitePayment extends OnsitePayment
         $this->extend('updateFormFields', $fields);
 
         // Generate a basic config and allow it to be customised
-        $stripeConfig = Config::inst()->get(GatewayInfo::class, 'Stripe');
+        $configName = $this->isPaymentIntent ? 'Stripe_PaymentIntents' : 'Stripe';
+        $stripeConfig = Config::inst()->get(GatewayInfo::class, $configName);
         $jsConfig = [
             'formID'        => 'PaymentForm_PaymentForm',
             'stripeField'   => 'PaymentForm_PaymentForm_' . $stripeField->getName(),
             'tokenField'    => 'PaymentForm_PaymentForm_' . $tokenField->getName(),
+            'submitButton'  => 'PaymentForm_PaymentForm_action_submitpayment',
             'key'           => isset($stripeConfig['parameters']) && isset($stripeConfig['parameters']['publishableKey'])
                                 ? $stripeConfig['parameters']['publishableKey']
                                 : '',
@@ -123,7 +131,12 @@ class StripeOnsitePayment extends OnsitePayment
         // Finally, add the javascript to the page
         Requirements::customScript("window.StripeConfig = " . json_encode($jsConfig), 'StripeJS');
         Requirements::javascript('https://js.stripe.com/v3/');
-        Requirements::javascript('innoweb/silverstripe-silvershop-stripe:javascript/checkout.js');
+        if($this->isPaymentIntent) {
+            Requirements::javascript('innoweb/silverstripe-silvershop-stripe:javascript/checkout_paymentintents.js');
+        }
+        if (!$this->isPaymentIntent) {
+            Requirements::javascript('innoweb/silverstripe-silvershop-stripe:javascript/checkout.js');
+        }
 
         return $fields;
     }

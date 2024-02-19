@@ -31,7 +31,7 @@ class StripeOrderProcessor extends OrderProcessor
     public function makePayment($gateway, $gatewaydata = array(), $successUrl = null, $cancelUrl = null)
     {
         // only do this for Stripe
-        if ($gateway != 'Stripe') {
+        if (!in_array($gateway, ['Stripe', 'Stripe_PaymentIntents'])) {
             return parent::makePayment($gateway, $gatewaydata, $successUrl, $cancelUrl);
         }
 
@@ -101,7 +101,7 @@ class StripeOrderProcessor extends OrderProcessor
 
             // only do this for Stripe
             if ($payment->Gateway != 'Stripe') {
-                return;
+                return $gatewaydata;
             }
 
             // update member and credit card

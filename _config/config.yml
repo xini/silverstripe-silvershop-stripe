@@ -22,3 +22,9 @@ Innoweb\SilvershopStripe\Checkout\Components\StripeOnsitePayment:
 SilverStripe\Omnipay\GatewayInfo:
   Stripe:
     is_offsite: false
+  Stripe_PaymentIntents:
+    is_offsite: false
+
+SilverStripe\Omnipay\Service\PurchaseService:
+  extensions:
+    - Innoweb\SilvershopStripe\Extensions\PaymentIntentPurchaseService

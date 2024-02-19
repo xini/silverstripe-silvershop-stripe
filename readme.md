@@ -24,7 +24,41 @@ composer require innoweb/silverstripe-silvershop-stripe
 ```
 
 ## Configuration
+### Payment Intents
+Create a file at `app/_config/payment.yml` that looks something like the following:
 
+```
+---
+Name: payment
+---
+SilverStripe\Omnipay\Model\Payment:
+  allowed_gateways:
+    - 'Stripe_PaymentIntents'
+
+SilverStripe\Omnipay\GatewayInfo:
+  Stripe_PaymentIntents:
+	failureUrl: '/checkout/summary'
+    parameters:
+      apiKey: sk_test_SECRET-KEY-FOR-YOUR-TEST-ACCOUNT
+      publishableKey: pk_test_PUBLISHABLE-KEY-FOR-TEST-ACCOUNT
+
+---
+Only:
+  environment: 'live'
+---
+SilverStripe\Omnipay\GatewayInfo:
+  Stripe_PaymentIntents:
+	failureUrl: '/checkout/summary'
+    parameters:
+      apiKey: sk_live_SECRET-KEY-FOR-YOUR-LIVE-ACCOUNT
+      publishableKey: pk_live_PUBLISHABLE-KEY-FOR-LIVE-ACCOUNT
+```
+
+If needed, the customer will be redirected to Stripe or his bank to verify the transaction via SCA or 3D-Secure. 
+
+A custom failure URL can be specified here for when a payment fails (for example, the card was declined).
+
+### Stripe Charge (deprecated)
 Create a file at `app/_config/payment.yml` that looks something like the following:
 
 ```
@@ -38,8 +72,8 @@ SilverStripe\Omnipay\Model\Payment:
 SilverStripe\Omnipay\GatewayInfo:
   Stripe:
     parameters:
-      apiKey: SECRET-KEY-FOR-YOUR-TEST-ACCOUNT
-      publishableKey: PUBLISHABLE-KEY-FOR-TEST-ACCOUNT
+     apiKey: sk_test_SECRET-KEY-FOR-YOUR-TEST-ACCOUNT
+     publishableKey: pk_test_PUBLISHABLE-KEY-FOR-TEST-ACCOUNT
 
 ---
 Only:
@@ -48,9 +82,12 @@ Only:
 SilverStripe\Omnipay\GatewayInfo:
   Stripe:
     parameters:
-      apiKey: SECRET-KEY-FOR-YOUR-LIVE-ACCOUNT
-      publishableKey: PUBLISHABLE-KEY-FOR-LIVE-ACCOUNT
+      apiKey: sk_live_SECRET-KEY-FOR-YOUR-LIVE-ACCOUNT
+      publishableKey: pk_live_PUBLISHABLE-KEY-FOR-LIVE-ACCOUNT
 ```
+
+
+## Saving cards
 
 The module creates Stripe customers and cards when a payment is processed. To disable the use of previously stored cards in the checkout process, add the following to your config:
 
