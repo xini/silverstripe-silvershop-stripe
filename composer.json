@@ -9,10 +9,9 @@
 		"homepage": "http://www.innoweb.com.au"
 	}],
 	"require": {
-		"silverstripe/cms": "^4",
-		"silverstripe/vendor-plugin": "^1",
-        "silvershop/core": "^3.0",
-        "suilven/silverstripe-track-member": "~1.0",
+		"silverstripe/cms": "^5",
+		"silverstripe/vendor-plugin": "^2",
+        "silvershop/core": "^3.1",
         "omnipay/stripe": "^3.0"
 	},
 	"autoload": {
@@ -22,7 +21,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-master": "1.x-dev"
+            "dev-master": "2.x-dev"
         },
         "expose": [
             "javascript"
