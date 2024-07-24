@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [2.0.0]
+
+* Upgrade to Silverstripe 5 and PHP 8.3
+* Removal of suilven/silverstripe-track-member dependency
+
 ## [1.0.0]
 
 * Payment Intents integration, thanks @BettinaMaria98 and @wernerkrauss

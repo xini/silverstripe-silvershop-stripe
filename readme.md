@@ -10,7 +10,6 @@ Based on [Mark Guinn's SS3 version](https://github.com/markguinn/silvershop-stri
 
 * [SilverStripe CMS](https://github.com/silverstripe/silverstripe-cms) 4.*
 * [SilverShop Core](https://github.com/silvershop/silvershop-core/) 3.*
-* [Track members](https://github.com/gordonbanderson/silverstripe-track-member) 1.*
 * [Omnipay Stripe](https://github.com/thephpleague/omnipay-stripe) 3.*
 
 uses [Stripe.js v3](https://stripe.com/docs/stripe-js) 
@@ -35,7 +34,7 @@ SilverStripe\Omnipay\Model\Payment:
 
 SilverStripe\Omnipay\GatewayInfo:
   Stripe_PaymentIntents:
-	failureUrl: '/checkout/summary'
+    failureUrl: '/checkout/summary'
     parameters:
       apiKey: sk_test_SECRET-KEY-FOR-YOUR-TEST-ACCOUNT
       publishableKey: pk_test_PUBLISHABLE-KEY-FOR-TEST-ACCOUNT
@@ -46,7 +45,7 @@ Only:
 ---
 SilverStripe\Omnipay\GatewayInfo:
   Stripe_PaymentIntents:
-	failureUrl: '/checkout/summary'
+    failureUrl: '/checkout/summary'
     parameters:
       apiKey: sk_live_SECRET-KEY-FOR-YOUR-LIVE-ACCOUNT
       publishableKey: pk_live_PUBLISHABLE-KEY-FOR-LIVE-ACCOUNT
@@ -70,8 +69,8 @@ SilverStripe\Omnipay\Model\Payment:
 SilverStripe\Omnipay\GatewayInfo:
   Stripe:
     parameters:
-     apiKey: sk_test_SECRET-KEY-FOR-YOUR-TEST-ACCOUNT
-     publishableKey: pk_test_PUBLISHABLE-KEY-FOR-TEST-ACCOUNT
+      apiKey: sk_test_SECRET-KEY-FOR-YOUR-TEST-ACCOUNT
+      publishableKey: pk_test_PUBLISHABLE-KEY-FOR-TEST-ACCOUNT
 
 ---
 Only:

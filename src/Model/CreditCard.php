@@ -39,7 +39,7 @@ class CreditCard extends DataObject
                 $data = [];
 
                 $gatewayName = 'Stripe';
-                $gatewayFactory = Injector::inst()->get('Omnipay\Common\GatewayFactory');
+                $gatewayFactory = Injector::inst()->get(\Omnipay\Common\GatewayFactory::class);
                 $gateway = $gatewayFactory->create($gatewayName);
                 $parameters = GatewayInfo::getParameters($gatewayName);
                 if (is_array($parameters)) {
@@ -55,14 +55,14 @@ class CreditCard extends DataObject
                 if ($response->isSuccessful()) {
                     $responseData = $response->getData();
                     $data = [
-                        'Brand' => isset($responseData['brand']) ? $responseData['brand'] : null,
-                        'LastFourDigits' => isset($responseData['last4']) ? $responseData['last4'] : null,
-                        'ExpiryMonth' => isset($responseData['exp_month']) ? $responseData['exp_month'] : null,
-                        'ExpiryYear' => isset($responseData['exp_year']) ? $responseData['exp_year'] : null,
+                        'Brand' => $responseData['brand'] ?? null,
+                        'LastFourDigits' => $responseData['last4'] ?? null,
+                        'ExpiryMonth' => $responseData['exp_month'] ?? null,
+                        'ExpiryYear' => $responseData['exp_year'] ?? null,
                     ];
                     $this->card_details = ArrayData::create($data);
                 }
-            } catch (InvalidRequestException $e) {
+            } catch (InvalidRequestException) {
             }
         }
         return $this->card_details;

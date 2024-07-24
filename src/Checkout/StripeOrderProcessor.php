@@ -42,7 +42,7 @@ class StripeOrderProcessor extends OrderProcessor
             return null;
         }
 
-        $payment->setSuccessUrl($successUrl ? $successUrl : $this->getReturnUrl());
+        $payment->setSuccessUrl($successUrl ?: $this->getReturnUrl());
 
         // Explicitly set the cancel URL
         if ($cancelUrl) {
@@ -132,7 +132,7 @@ class StripeOrderProcessor extends OrderProcessor
                     if (empty($gatewaydata['SavedCreditCardID']) || $gatewaydata['SavedCreditCardID'] == 'newcard') {
 
                         $request = $service->oGateway()->createCard([
-                            'cardReference' => isset($gatewaydata['token']) ? $gatewaydata['token'] : '',
+                            'cardReference' => $gatewaydata['token'] ?? '',
                             'customerReference' => $member->StripeCustomerReference,
                         ]);
                         $response = $request->send();
