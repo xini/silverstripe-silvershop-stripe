@@ -11,7 +11,7 @@
 	"require": {
 		"silverstripe/cms": "^5",
 		"silverstripe/vendor-plugin": "^2",
-        "silvershop/core": "^3.1",
+        "silvershop/core": "dev-main",
         "omnipay/stripe": "^3.0"
 	},
 	"autoload": {
