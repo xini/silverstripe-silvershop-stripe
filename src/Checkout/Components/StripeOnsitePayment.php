@@ -36,21 +36,25 @@ class StripeOnsitePayment extends OnsitePayment
     use Extensible;
     use Configurable;
 
-    /** @var bool - if for some reason the gateway is not actually stripe, fall back to OnsitePayment */
-    protected $isStripe;
+    /**
+     * @var bool - if for some reason the gateway is not actually stripe, fall back to OnsitePayment
+     */
+    protected bool $isStripe;
 
-    /** @var bool - do we use Payment Intents? */
-    protected $isPaymentIntent;
+    /**
+     * @var bool - do we use Payment Intents?
+     */
+    protected bool $isPaymentIntent;
 
-    /** @var \Omnipay\Common\AbstractGateway|\Omnipay\Stripe\AbstractGateway */
+    /**
+     * @var \Omnipay\Common\AbstractGateway|\Omnipay\Stripe\AbstractGateway
+     */
     protected $gateway;
 
     /**
-     * @param Order $order
-     *
      * @return \Omnipay\Common\AbstractGateway|\Omnipay\Stripe\AbstractGateway
      */
-    protected function getGateway($order)
+    protected function getGateway(Order $order)
     {
         if (!isset($this->gateway)) {
             $tempPayment = new Payment(
@@ -69,9 +73,8 @@ class StripeOnsitePayment extends OnsitePayment
 
     /**
      * @param \Omnipay\Common\AbstractGateway|\Omnipay\Stripe\Gateway $gateway
-     * @return $this
      */
-    public function setGateway($gateway)
+    public function setGateway($gateway): static
     {
         $this->gateway = $gateway;
         $this->isStripe = ($this->gateway instanceof \Omnipay\Stripe\AbstractGateway);
@@ -84,10 +87,8 @@ class StripeOnsitePayment extends OnsitePayment
      * according to the responsibility of this component.
      *
      * @param Order $order
-     *
-     * @return FieldList
      */
-    public function getFormFields(Order $order)
+    public function getFormFields(Order $order): FieldList
     {
         $this->getGateway($order);
         if (!$this->isStripe) {
@@ -131,7 +132,7 @@ class StripeOnsitePayment extends OnsitePayment
         // Finally, add the javascript to the page
         Requirements::customScript("window.StripeConfig = " . json_encode($jsConfig), 'StripeJS');
         Requirements::javascript('https://js.stripe.com/v3/');
-        if($this->isPaymentIntent) {
+        if ($this->isPaymentIntent) {
             Requirements::javascript('innoweb/silverstripe-silvershop-stripe:javascript/checkout_paymentintents.js');
         }
         if (!$this->isPaymentIntent) {
@@ -141,24 +142,23 @@ class StripeOnsitePayment extends OnsitePayment
         return $fields;
     }
 
-    /**
-     * @param Member $member
-     * @return bool
-     */
-    protected function hasExistingCards(Member $member = null) {
+    protected function hasExistingCards(Member $member = null): bool
+    {
         // don't show existing card fields
         if (!$this->config()->get('enable_saved_cards')) {
             return false;
         }
-        if (!$member) $member = Security::getCurrentUser();
+        if (!$member) {
+            $member = Security::getCurrentUser();
+        }
         return $member && $member->CreditCards()->exists();
     }
 
     /**
      * Allow choosing from an existing credit cards
-     * @return FormField|null field
      */
-    public function getExistingCardsField() {
+    public function getExistingCardsField(): DropdownField|OptionsetField|null
+    {
         $member = Security::getCurrentUser();
         if ($this->hasExistingCards($member)) {
             $cardOptions = [];
@@ -168,23 +168,25 @@ class StripeOnsitePayment extends OnsitePayment
             }
             $cardOptions['newcard'] = _t('OnsitePaymentCheckoutComponent.CreateNewCard', 'Create a new card');
             $fieldtype = count($cardOptions) > 3 ? DropdownField::class : OptionsetField::class;
-            $label = _t("OnsitePaymentCheckoutComponent.ExistingCards", "Existing Credit Cards");
-            return $fieldtype::create("SavedCreditCardID", $label,
+            $label = _t(
+                "OnsitePaymentCheckoutComponent.ExistingCards",
+                "Existing Credit Cards"
+            );
+            return $fieldtype::create(
+                "SavedCreditCardID",
+                $label,
                 $cardOptions,
                 $member->DefaultCreditCardID
-            )->addExtraClass('existingCreditCards')->setValue($member->DefaultCreditCardID);
+            )->addExtraClass('existingCreditCards')
+            ->setValue($member->DefaultCreditCardID);
         }
         return null;
     }
 
     /**
-     * Get the data fields that are required for the component.
-     *
-     * @param  Order $order [description]
-     *
-     * @return array        required data fields
+     * Get the data fields that are required for the component
      */
-    public function getRequiredFields(Order $order)
+    public function getRequiredFields(Order $order): array
     {
         $this->getGateway($order);
         if (!$this->isStripe) {
@@ -196,16 +198,11 @@ class StripeOnsitePayment extends OnsitePayment
 
     /**
      * Is this data valid for saving into an order?
-     *
      * This function should never rely on form.
      *
-     * @param Order $order
-     * @param array $data data to be validated
-     *
      * @throws ValidationException
-     * @return boolean the data is valid
      */
-    public function validateData(Order $order, array $data)
+    public function validateData(Order $order, array $data): bool
     {
         $this->getGateway($order);
         if (!$this->isStripe) {
@@ -232,11 +229,11 @@ class StripeOnsitePayment extends OnsitePayment
     /**
      * Get required data out of the model.
      *
-     * @param  Order $order order to get data from.
+     * @param Order $order order to get data from.
      *
      * @return array        get data from model(s)
      */
-    public function getData(Order $order)
+    public function getData(Order $order): array
     {
         $this->getGateway($order);
         if (!$this->isStripe) {
@@ -252,17 +249,17 @@ class StripeOnsitePayment extends OnsitePayment
      * This function should never rely on form.
      *
      * @param Order $order
-     * @param array $data data to be saved into order object
+     * @param array $data  data to be saved into order object
      *
      * @return Order the updated order
      */
-    public function setData(Order $order, array $data)
+    public function setData(Order $order, array $data): Order
     {
         $this->getGateway($order);
         if (!$this->isStripe) {
             return parent::setData($order, $data);
         } else {
-            return [];
+            return $order;
         }
     }
 }

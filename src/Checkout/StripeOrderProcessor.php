@@ -18,17 +18,15 @@ class StripeOrderProcessor extends OrderProcessor
     /**
      * Handle payment with Stripe's stored customer and credit card details
      *
-     * @param string $gateway the gateway to use
-     * @param array $gatewaydata the data that should be passed to the gateway
-     * @param string $successUrl (optional) return URL for successful payments.
-     *                            If left blank, the default return URL will be
-     *                            used @see getReturnUrl
-     * @param string $cancelUrl (optional) return URL for cancelled/failed payments
-     *
-     * @return ServiceResponse|null
+     * @param  string $gateway     the gateway to use
+     * @param  array  $gatewaydata the data that should be passed to the gateway
+     * @param  string $successUrl  (optional) return URL for successful payments.
+     *                             If left blank, the default return URL will be
+     *                             used @see getReturnUrl
+     * @param  string $cancelUrl   (optional) return URL for cancelled/failed payments
      * @throws \SilverStripe\Omnipay\Exception\InvalidConfigurationException
      */
-    public function makePayment($gateway, $gatewaydata = array(), $successUrl = null, $cancelUrl = null)
+    public function makePayment($gateway, $gatewaydata = array(), $successUrl = null, $cancelUrl = null): ?ServiceResponse
     {
         // only do this for Stripe
         if (!in_array($gateway, ['Stripe', 'Stripe_PaymentIntents'])) {
@@ -88,14 +86,9 @@ class StripeOrderProcessor extends OrderProcessor
     }
 
     /**
-     * store customer and credit card reference
-     *
-     * @param PaymentService $service
-     * @param Payment $payment
-     * @param array $gatewaydata
-     * @return null
+     * Store customer and credit card reference
      */
-    protected function saveCustomerAndCard($service, $payment, $gatewaydata)
+    protected function saveCustomerAndCard(PaymentService $service, Payment $payment, array $gatewaydata): array
     {
         if ($payment) {
 
@@ -131,10 +124,12 @@ class StripeOrderProcessor extends OrderProcessor
                 if ($member->StripeCustomerReference) {
                     if (empty($gatewaydata['SavedCreditCardID']) || $gatewaydata['SavedCreditCardID'] == 'newcard') {
 
-                        $request = $service->oGateway()->createCard([
+                        $request = $service->oGateway()->createCard(
+                            [
                             'cardReference' => $gatewaydata['token'] ?? '',
                             'customerReference' => $member->StripeCustomerReference,
-                        ]);
+                            ]
+                        );
                         $response = $request->send();
                         if ($response->isSuccessful()) {
                             // save card
@@ -179,7 +174,7 @@ class StripeOrderProcessor extends OrderProcessor
         return $gatewaydata;
     }
 
-    protected function getGatewayData($customData)
+    protected function getGatewayData($customData): array
     {
         $data = parent::getGatewayData($customData);
 

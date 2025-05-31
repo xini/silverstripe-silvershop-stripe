@@ -15,13 +15,13 @@ use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
 
 class CreditCard extends DataObject
 {
-    private static $table_name = 'CreditCard';
+    private static string $table_name = 'CreditCard';
 
-    private static $db = [
+    private static array $db = [
         'CardReference' => 'Varchar(50)',
     ];
 
-    private static $has_one = [
+    private static array $has_one = [
         'Member' => Member::class,
     ];
 
@@ -68,14 +68,15 @@ class CreditCard extends DataObject
         return $this->card_details;
     }
 
-    public function getTitle() {
+    public function getTitle(): ?string
+    {
         if ($data = $this->getCardDetails()) {
             return $data->Brand . ' ****' . $data->LastFourDigits . ' ' . $data->ExpiryMonth . '/' . $data->ExpiryYear;
         }
         return null;
     }
 
-    public function onAfterBuild()
+    public function onAfterBuild(): void
     {
         parent::onAfterBuild();
 

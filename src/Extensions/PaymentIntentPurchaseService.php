@@ -14,14 +14,12 @@ class PaymentIntentPurchaseService extends Extension
 {
     /**
      * Adds required data
-     *
-     * @param array $data
      */
-    public function onBeforePurchase(array &$data)
+    public function onBeforePurchase(array &$data): void
     {
         $payment = $this->owner->getPayment();
 
-        /** @var Order $order */
+        // @var Order $order
         $order = $payment->Order();
 
         if ($payment->Gateway === 'Stripe_PaymentIntents') {
@@ -29,17 +27,18 @@ class PaymentIntentPurchaseService extends Extension
             unset($data['token']);
             $data['confirm'] = true;
 
-			// Get the config values for the failure url (if specified)
-			$stripeConfig = Config::inst()->get(GatewayInfo::class, 'Stripe_PaymentIntents');
-			
-			if(isset($stripeConfig['failureUrl']))
-				$payment->setFailureUrl($stripeConfig['failureUrl']);
+            // Get the config values for the failure url (if specified)
+            $stripeConfig = Config::inst()->get(GatewayInfo::class, 'Stripe_PaymentIntents');
+
+            if (isset($stripeConfig['failureUrl'])) {
+                $payment->setFailureUrl($stripeConfig['failureUrl']);
+            }
         }
 
 
     }
 
-    public function onAfterSendPurchase(RequestInterface $request,ResponseInterface $response)
+    public function onAfterSendPurchase(RequestInterface $request, ResponseInterface $response): void
     {
         $payment = $this->owner->getPayment();
 
@@ -50,7 +49,7 @@ class PaymentIntentPurchaseService extends Extension
         }
     }
 
-    public function onBeforeCompletePurchase(array &$data = [])
+    public function onBeforeCompletePurchase(array &$data = []): void
     {
         // Hack to get the payment, as silverstripe-omnipay doesn't currently
         // provide a getPayment() method in PaymentService

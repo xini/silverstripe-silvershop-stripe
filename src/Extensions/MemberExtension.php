@@ -8,26 +8,26 @@ use SilverStripe\ORM\DataExtension;
 
 class MemberExtension extends DataExtension
 {
-    private static $db = [
+    private static array $db = [
         'StripeCustomerReference' => 'Varchar',
     ];
     
-    private static $has_one = array(
+    private static array $has_one = array(
         'DefaultCreditCard' => CreditCard::class,
     );
     
-    private static $has_many = [
+    private static array $has_many = [
         'CreditCards' => CreditCard::class,
     ];
     
-    public function updateCMSFields(FieldList $fields)
+    public function updateCMSFields(FieldList $fields): void
     {
         $fields->removeByName('StripeCustomerReference');
         $fields->removeByName('DefaultCreditCardID');
         $fields->removeByName('CreditCards');
     }
     
-    public function updateMemberFormFields(FieldList $fields)
+    public function updateMemberFormFields(FieldList $fields): void
     {
         $fields->removeByName('StripeCustomerReference');
         $fields->removeByName('DefaultCreditCardID');
