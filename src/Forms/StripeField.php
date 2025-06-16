@@ -9,15 +9,13 @@ use SilverStripe\Forms\TextField;
  */
 class StripeField extends TextField
 {
-    
-    public function Field($properties = array())
+    public function Field($properties = [])
     {
         return null;
     }
-    
-    public function getFieldHolderTemplate()
+
+    public function getFieldHolderTemplate(): string
     {
         return 'StripeField_holder';
     }
-    
 }

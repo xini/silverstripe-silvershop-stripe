@@ -7,11 +7,11 @@ use SilverStripe\ORM\DataExtension;
 
 class PaymentExtension extends DataExtension
 {
-    private static $db = [
+    private static array $db = [
         'StripePaymentIntentReference' => 'Varchar(255)'
     ];
 
-    private static $has_one = [
+    private static array $has_one = [
         'SavedCreditCard' => CreditCard::class,
     ];
 }
