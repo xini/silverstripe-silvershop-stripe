@@ -1,23 +1,23 @@
 {
-	"name": "innoweb/silverstripe-silvershop-stripe",
-	"description": "Adds stripe customer and creditcard saving to silvershop",
-	"type": "silverstripe-vendormodule",
-	"license": "BSD-3-Clause",
-	"keywords": ["silverstripe", "silvershop", "stripe", "customer", "card"],
-	"authors": [{
-		"name": "Florian Thoma",
-		"homepage": "http://www.innoweb.com.au"
-	}],
-	"require": {
-		"silverstripe/cms": "^5",
-		"silverstripe/vendor-plugin": "^2",
+    "name": "innoweb/silverstripe-silvershop-stripe",
+    "description": "Adds stripe customer and creditcard saving to silvershop",
+    "type": "silverstripe-vendormodule",
+    "license": "BSD-3-Clause",
+    "keywords": ["silverstripe", "silvershop", "stripe", "customer", "card"],
+    "authors": [{
+        "name": "Florian Thoma",
+        "homepage": "http://www.innoweb.com.au"
+    }],
+    "require": {
+        "silverstripe/cms": "^5",
+        "silverstripe/vendor-plugin": "^2",
         "silvershop/core": "^3.1",
         "omnipay/stripe": "^3.0"
-	},
-	"autoload": {
-		"psr-4": {
-			"Innoweb\\SilvershopStripe\\": "src/"
-		}
+    },
+    "autoload": {
+        "psr-4": {
+            "Innoweb\\SilvershopStripe\\": "src/"
+        }
     },
     "extra": {
         "branch-alias": {
@@ -26,5 +26,5 @@
         "expose": [
             "javascript"
         ]
-	}
+    }
 }
