@@ -8,6 +8,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 * Upgrade to Silverstripe 5 and PHP 8.3
 * Removal of suilven/silverstripe-track-member dependency
+* Add types (thanks to @AntonyThorpe)
 
 ## [1.0.0]
 
