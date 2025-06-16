@@ -8,9 +8,9 @@ Based on [Mark Guinn's SS3 version](https://github.com/markguinn/silvershop-stri
 
 ## Requirements
 
-* [SilverStripe CMS](https://github.com/silverstripe/silverstripe-cms) 4.*
-* [SilverShop Core](https://github.com/silvershop/silvershop-core/) 3.*
-* [Omnipay Stripe](https://github.com/thephpleague/omnipay-stripe) 3.*
+* [SilverStripe CMS](https://github.com/silverstripe/silverstripe-cms) 5
+* [SilverShop Core](https://github.com/silvershop/silvershop-core/) 3.1+
+* [Omnipay Stripe](https://github.com/thephpleague/omnipay-stripe) 3
 
 uses [Stripe.js v3](https://stripe.com/docs/stripe-js) 
 
