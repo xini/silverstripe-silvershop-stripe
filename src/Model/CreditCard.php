@@ -1,18 +1,22 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Innoweb\SilvershopStripe\Model;
 
+use Exception;
 use Innoweb\SilvershopStripe\Omnipay\Message\FetchCardRequest;
+use Omnipay\Common\GatewayFactory;
 use Omnipay\Common\Http\Client as OmnipayClient;
 use Psr\Log\LoggerInterface;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\Model\ArrayData;
 use SilverStripe\Omnipay\GatewayInfo;
 use SilverStripe\Omnipay\Model\Payment;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DB;
 use SilverStripe\Security\Member;
-use SilverStripe\View\ArrayData;
 use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
 
 class CreditCard extends DataObject
@@ -27,14 +31,15 @@ class CreditCard extends DataObject
         'Member' => Member::class,
     ];
 
-    protected $card_details = null;
+    protected $card_details;
 
     public function getCardDetails()
     {
         if (!$this->card_details
             && $this->CardReference
-            && $this->Member()
-            && $this->Member()->StripeCustomerReference
+            && ($member = $this->getComponent('Member'))
+            && $member ->exists()
+            && $member->StripeCustomerReference
         ) {
             try {
                 // load data from API
@@ -45,7 +50,7 @@ class CreditCard extends DataObject
                     $gatewayName = $gateways[0];
                 }
 
-                $gatewayFactory = Injector::inst()->get(\Omnipay\Common\GatewayFactory::class);
+                $gatewayFactory = Injector::inst()->get(GatewayFactory::class);
                 $gateway = $gatewayFactory->create($gatewayName);
                 $parameters = GatewayInfo::getParameters($gatewayName);
                 if (is_array($parameters)) {
@@ -54,7 +59,7 @@ class CreditCard extends DataObject
 
                 $obj = new FetchCardRequest(new OmnipayClient(), SymfonyRequest::createFromGlobals());
                 $fetchCardRequest = $obj->initialize(array_replace($gateway->getParameters(), $parameters ?? []));
-                $fetchCardRequest->setCustomerReference($this->Member()->StripeCustomerReference);
+                $fetchCardRequest->setCustomerReference($member->StripeCustomerReference);
                 $fetchCardRequest->setCardReference($this->CardReference);
 
                 $response = $fetchCardRequest->send();

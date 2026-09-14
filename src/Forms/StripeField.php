@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Innoweb\SilvershopStripe\Forms;
 
 use SilverStripe\Forms\TextField;
@@ -9,7 +11,7 @@ use SilverStripe\Forms\TextField;
  */
 class StripeField extends TextField
 {
-    public function Field($properties = [])
+    public function Field($properties = []): null
     {
         return null;
     }

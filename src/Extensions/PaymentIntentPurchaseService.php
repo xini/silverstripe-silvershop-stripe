@@ -1,10 +1,13 @@
 <?php
 
+declare(strict_types=1);
 
 namespace Innoweb\SilvershopStripe\Extensions;
 
 use Omnipay\Common\Message\RequestInterface;
 use Omnipay\Common\Message\ResponseInterface;
+use Omnipay\Stripe\Message\PaymentIntents\Response;
+use ReflectionProperty;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Extension;
 use SilverStripe\Omnipay\GatewayInfo;
@@ -16,10 +19,10 @@ class PaymentIntentPurchaseService extends Extension
      */
     public function onBeforePurchase(array &$data): void
     {
-        $payment = $this->owner->getPayment();
+        $payment = $this->getOwner()->getPayment();
 
         // @var Order $order
-        $order = $payment->Order();
+        $payment->Order();
 
         if ($payment->Gateway === 'Stripe_PaymentIntents') {
             $data['paymentMethod'] = $data['token'];
@@ -37,9 +40,9 @@ class PaymentIntentPurchaseService extends Extension
 
     public function onAfterSendPurchase(RequestInterface $request, ResponseInterface $response): void
     {
-        $payment = $this->owner->getPayment();
+        $payment = $this->getOwner()->getPayment();
 
-        if ($response instanceof \Omnipay\Stripe\Message\PaymentIntents\Response) {
+        if ($response instanceof Response) {
             // Store the Payment Intent reference for later...
             $payment->StripePaymentIntentReference = $response->getPaymentIntentReference();
             $payment->write();
@@ -50,9 +53,9 @@ class PaymentIntentPurchaseService extends Extension
     {
         // Hack to get the payment, as silverstripe-omnipay doesn't currently
         // provide a getPayment() method in PaymentService
-        $reflectionProperty = new \ReflectionProperty($this->owner::class, 'payment');
+        $reflectionProperty = new ReflectionProperty($this->getOwner()::class, 'payment');
 
-        $payment = $reflectionProperty->getValue($this->owner);
+        $payment = $reflectionProperty->getValue($this->getOwner());
         if ($payment->StripePaymentIntentReference) {
             // Pass the Payment Intent reference with the transaction data to Stripe
             $data['paymentIntentReference'] = $payment->StripePaymentIntentReference;

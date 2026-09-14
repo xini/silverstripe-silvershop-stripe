@@ -1,8 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Innoweb\SilvershopStripe\Checkout\Components;
 
 use Innoweb\SilvershopStripe\Forms\StripeField;
+use Omnipay\Stripe\AbstractGateway;
+use Omnipay\Stripe\Gateway;
 use Omnipay\Stripe\PaymentIntentsGateway;
 use SilverShop\Checkout\Checkout;
 use SilverShop\Checkout\Component\OnsitePayment;
@@ -11,6 +15,8 @@ use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Injector\Injectable;
+use SilverStripe\Core\Validation\ValidationException;
+use SilverStripe\Core\Validation\ValidationResult;
 use SilverStripe\Forms\DropdownField;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\HiddenField;
@@ -19,8 +25,6 @@ use SilverStripe\Omnipay\GatewayInfo;
 use SilverStripe\Omnipay\Model\Payment;
 use SilverStripe\Omnipay\Service\PurchaseService;
 use SilverStripe\ORM\FieldType\DBField;
-use SilverStripe\ORM\ValidationException;
-use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
 use SilverStripe\View\Requirements;
@@ -47,24 +51,22 @@ class StripeOnsitePayment extends OnsitePayment
     protected bool $isPaymentIntent;
 
     /**
-     * @var \Omnipay\Common\AbstractGateway|\Omnipay\Stripe\AbstractGateway
+     * @var \Omnipay\Common\AbstractGateway|AbstractGateway
      */
     protected $gateway;
 
     /**
-     * @return \Omnipay\Common\AbstractGateway|\Omnipay\Stripe\AbstractGateway
+     * @return \Omnipay\Common\AbstractGateway|AbstractGateway
      */
     protected function getGateway(Order $order)
     {
         if ($this->gateway === null) {
-            $tempPayment = new Payment(
-                [
-                    'Gateway' => Checkout::get($order)->getSelectedPaymentMethod(),
-                ]
-            );
+            $tempPayment = Payment::create([
+                'Gateway' => Checkout::get($order)->getSelectedPaymentMethod(),
+            ]);
             $service = PurchaseService::create($tempPayment);
             $this->gateway = $service->oGateway();
-            $this->isStripe = ($this->gateway instanceof \Omnipay\Stripe\AbstractGateway);
+            $this->isStripe = ($this->gateway instanceof AbstractGateway);
             $this->isPaymentIntent = $this->gateway instanceof PaymentIntentsGateway;
         }
 
@@ -72,12 +74,12 @@ class StripeOnsitePayment extends OnsitePayment
     }
 
     /**
-     * @param \Omnipay\Common\AbstractGateway|\Omnipay\Stripe\Gateway $gateway
+     * @param \Omnipay\Common\AbstractGateway|Gateway $gateway
      */
     public function setGateway($gateway): static
     {
         $this->gateway = $gateway;
-        $this->isStripe = ($this->gateway instanceof \Omnipay\Stripe\AbstractGateway);
+        $this->isStripe = ($this->gateway instanceof AbstractGateway);
         $this->isPaymentIntent = $this->gateway instanceof PaymentIntentsGateway;
         return $this;
     }
@@ -85,8 +87,6 @@ class StripeOnsitePayment extends OnsitePayment
     /**
      * Get form fields for manipulating the current order,
      * according to the responsibility of this component.
-     *
-     * @param Order $order
      */
     public function getFormFields(Order $order): FieldList
     {
@@ -143,7 +143,7 @@ class StripeOnsitePayment extends OnsitePayment
         return $fields;
     }
 
-    protected function hasExistingCards(Member $member = null): bool
+    protected function hasExistingCards(?Member $member = null): bool
     {
         if (!$this->isPaymentIntent) {
             return false;
@@ -153,7 +153,7 @@ class StripeOnsitePayment extends OnsitePayment
             return false;
         }
 
-        if (!$member instanceof \SilverStripe\Security\Member) {
+        if (!$member instanceof Member) {
             $member = Security::getCurrentUser();
         }
 
@@ -217,9 +217,9 @@ class StripeOnsitePayment extends OnsitePayment
         $this->getGateway($order);
         if (!$this->isStripe) {
             return parent::getRequiredFields($order);
-        } else {
-            return $this->hasExistingCards() ? ['SavedCreditCardID'] : [];
         }
+
+        return $this->hasExistingCards() ? ['SavedCreditCardID'] : [];
     }
 
     /**
@@ -233,20 +233,20 @@ class StripeOnsitePayment extends OnsitePayment
         $this->getGateway($order);
         if (!$this->isStripe) {
             return parent::validateData($order, $data);
-        } else {
-            // If existing card selected, check that it exists in $member->CreditCards
-            $existingID = empty($data['SavedCreditCardID']) ? 0 : (int)$data['SavedCreditCardID'];
-            if ($existingID !== 0 && (!Security::getCurrentUser() || !Security::getCurrentUser()->CreditCards()->byID($existingID))) {
-                $result = ValidationResult::create();
-                $result->error("Invalid card supplied", 'SavedCreditCardID');
-                throw new ValidationException($result);
-            }
-
-            // NOTE: Stripe will validate clientside and if for some reason that falls through
-            // it will fail on payment and give an error then. It would be a lot of work to get
-            // the token to be namespaced so it could be passed here and there would be no point.
-            return true;
         }
+
+        // If existing card selected, check that it exists in $member->CreditCards
+        $existingID = empty($data['SavedCreditCardID']) ? 0 : (int)$data['SavedCreditCardID'];
+        if ($existingID !== 0 && (!Security::getCurrentUser() || !Security::getCurrentUser()->CreditCards()->byID($existingID))) {
+            $result = ValidationResult::create();
+            $result->error("Invalid card supplied", 'SavedCreditCardID');
+            throw ValidationException::create($result);
+        }
+
+        // NOTE: Stripe will validate clientside and if for some reason that falls through
+        // it will fail on payment and give an error then. It would be a lot of work to get
+        // the token to be namespaced so it could be passed here and there would be no point.
+        return true;
     }
 
     /**
@@ -261,9 +261,9 @@ class StripeOnsitePayment extends OnsitePayment
         $this->getGateway($order);
         if (!$this->isStripe) {
             return parent::getData($order);
-        } else {
-            return [];
         }
+
+        return [];
     }
 
     /**
@@ -271,9 +271,7 @@ class StripeOnsitePayment extends OnsitePayment
      *
      * This function should never rely on form.
      *
-     * @param Order $order
      * @param array $data  data to be saved into order object
-     *
      * @return Order the updated order
      */
     public function setData(Order $order, array $data): Order
@@ -281,8 +279,8 @@ class StripeOnsitePayment extends OnsitePayment
         $this->getGateway($order);
         if (!$this->isStripe) {
             return parent::setData($order, $data);
-        } else {
-            return $order;
         }
+
+        return $order;
     }
 }

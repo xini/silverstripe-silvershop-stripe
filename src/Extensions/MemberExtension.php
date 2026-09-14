@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Innoweb\SilvershopStripe\Extensions;
 
 use Innoweb\SilvershopStripe\Model\CreditCard;
+use SilverStripe\Core\Extension;
 use SilverStripe\Forms\FieldList;
-use SilverStripe\ORM\DataExtension;
 
-class MemberExtension extends DataExtension
+class MemberExtension extends Extension
 {
     private static array $db = [
         'StripeCustomerReference' => 'Varchar',

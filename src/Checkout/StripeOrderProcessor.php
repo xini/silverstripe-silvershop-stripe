@@ -1,15 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Innoweb\SilvershopStripe\Checkout;
 
 use Innoweb\SilvershopStripe\Checkout\Components\StripeOnsitePayment;
 use Innoweb\SilvershopStripe\Model\CreditCard;
 use Innoweb\SilvershopStripe\Omnipay\Message\AttachCardRequest;
 use Omnipay\Common\Exception\InvalidRequestException;
+use Omnipay\Common\GatewayFactory;
 use Omnipay\Common\Http\Client as OmnipayClient;
 use SilverShop\Checkout\OrderProcessor;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\Omnipay\Exception\Exception;
+use SilverStripe\Omnipay\Exception\InvalidConfigurationException;
 use SilverStripe\Omnipay\GatewayInfo;
 use SilverStripe\Omnipay\Model\Payment;
 use SilverStripe\Omnipay\Service\PaymentService;
@@ -30,7 +35,7 @@ class StripeOrderProcessor extends OrderProcessor
      *                             If left blank, the default return URL will be
      *                             used @see getReturnUrl
      * @param  string $cancelUrl   (optional) return URL for cancelled/failed payments
-     * @throws \SilverStripe\Omnipay\Exception\InvalidConfigurationException
+     * @throws InvalidConfigurationException
      */
     public function makePayment($gateway, $gatewaydata = [], $successUrl = null, $cancelUrl = null): ?ServiceResponse
     {
@@ -70,7 +75,7 @@ class StripeOrderProcessor extends OrderProcessor
         // Initiate payment, get the result back
         try {
             $serviceResponse = $service->initiate($gatewaydata);
-        } catch (\SilverStripe\Omnipay\Exception\Exception $exception) {
+        } catch (Exception $exception) {
             // error out when an exception occurs
             $this->error($exception->getMessage());
             return null;
@@ -96,7 +101,7 @@ class StripeOrderProcessor extends OrderProcessor
      */
     protected function saveCustomerAndCard(string $gatewayName, PaymentService $service, Payment $payment, array $gatewaydata): array
     {
-        if ($payment
+        if ($payment instanceof Payment
             && $gatewayName === 'Stripe_PaymentIntents'
             && Config::inst()->get(StripeOnsitePayment::class, 'enable_saved_cards')
         ) {
@@ -127,7 +132,7 @@ class StripeOrderProcessor extends OrderProcessor
                 if ($member->StripeCustomerReference && $member->CreditCards()->filter('CardReference', $gatewaydata['token'])->count() == 0) {
                     if (empty($gatewaydata['SavedCreditCardID']) || $gatewaydata['SavedCreditCardID'] == 'newcard') {
                         try {
-                            $gatewayFactory = Injector::inst()->get(\Omnipay\Common\GatewayFactory::class);
+                            $gatewayFactory = Injector::inst()->get(GatewayFactory::class);
                             $gateway = $gatewayFactory->create($gatewayName);
                             $parameters = GatewayInfo::getParameters($gatewayName);
                             if (is_array($parameters)) {
@@ -191,8 +196,11 @@ class StripeOrderProcessor extends OrderProcessor
 
         // add description
         $data['description'] = $data['firstName'] . ' ' . $data['lastName'] . ' | ';
-        if ($this->order->BillingAddress()->Company) {
-            $data['description'] .= (string) $this->order->BillingAddress()->Company . ' | ';
+        if (($address = $this->order->BillingAddress())
+            && $address->exists()
+            && $address->Company
+        ) {
+            $data['description'] .= $address->Company . ' | ';
         }
 
         $data['description'] .= $data['email'] . ' | ' . $data['transactionId'] . ' ';

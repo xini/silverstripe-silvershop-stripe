@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [3.0.0]
+
+* upgrade to Silverstripe 6 and PHP 8.5
+
 ## [2.1.1]
 
 * fix js form submission to include generated token (messing with form validation though, meaning that the payment form needs to be on its own checkout step)

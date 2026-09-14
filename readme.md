@@ -8,8 +8,8 @@ Based on [Mark Guinn's SS3 version](https://github.com/markguinn/silvershop-stri
 
 ## Requirements
 
-* [SilverStripe CMS](https://github.com/silverstripe/silverstripe-cms) 5
-* [SilverShop Core](https://github.com/silvershop/silvershop-core/) 3.1+
+* [SilverStripe CMS](https://github.com/silverstripe/silverstripe-cms) 6
+* [SilverShop Core](https://github.com/silvershop/silvershop-core/) 6
 * [Omnipay Stripe](https://github.com/thephpleague/omnipay-stripe) 3
 
 uses [Stripe.js v3](https://stripe.com/docs/stripe-js) 
@@ -26,7 +26,7 @@ composer require innoweb/silverstripe-silvershop-stripe
 
 Create a file at `app/_config/payment.yml` that looks something like the following:
 
-```
+```yaml
 ---
 Name: payment
 ---
@@ -38,19 +38,15 @@ SilverStripe\Omnipay\GatewayInfo:
   Stripe_PaymentIntents:
     failureUrl: '/checkout/summary'
     parameters:
-      apiKey: sk_test_SECRET-KEY-FOR-YOUR-TEST-ACCOUNT
-      publishableKey: pk_test_PUBLISHABLE-KEY-FOR-TEST-ACCOUNT
+      apiKey: '`STRIPE_SECRET_KEY`'
+      publishableKey: '`STRIPE_PUBLISHABLE_KEY`'
+```
 
----
-Only:
-  environment: 'live'
----
-SilverStripe\Omnipay\GatewayInfo:
-  Stripe_PaymentIntents:
-    failureUrl: '/checkout/summary'
-    parameters:
-      apiKey: sk_live_SECRET-KEY-FOR-YOUR-LIVE-ACCOUNT
-      publishableKey: pk_live_PUBLISHABLE-KEY-FOR-LIVE-ACCOUNT
+Then set the API keys in your `.env` file:
+
+```.dotenv
+STRIPE_SECRET_KEY=sk_env_SECRET-KEY-FOR-YOUR-ACCOUNT
+STRIPE_PUBLISHABLE_KEY=pk_env_PUBLISHABLE-KEY-FOR-ACCOUNT
 ```
 
 If needed, the customer will be redirected to Stripe or his bank to verify the transaction via SCA or 3D-Secure. 
@@ -63,7 +59,7 @@ The `Stripe_PaymentIntents` gateway creates Stripe customers and cards when a pa
 
 To disable the storage of card tokens and the use of previously stored cards in the checkout process, add the following to your config:
 
-```
+```yaml
 ---
 Name: app-stripe-config
 After: silvershop-stripe-config
